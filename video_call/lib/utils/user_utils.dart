@@ -17,3 +17,15 @@ Future<String> generateUserId() async {
 
   return userId;
 }
+
+Future<String> loadUserId() async {
+  final prefs = await SharedPreferences.getInstance();
+  String? userId = prefs.getString('userId');
+  
+  if (userId == null) {
+    userId = const Uuid().v4();
+    await prefs.setString('userId', userId);
+  }
+  
+  return userId;
+}

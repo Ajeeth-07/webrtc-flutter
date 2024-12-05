@@ -55,7 +55,7 @@ async function isMeetingPresent(meetingId, callback) {
 
 async function checkMeetingExists(meetingId, callback) {
   meeting
-    .findById(meetingId, "hostId hostName startTime") // Space-separated string
+    .findById(meetingId,) // Space-separated string
     .populate("meetingUsers", "MeetingUser")
     .then((response) => {
       if (!response) callback("Invalid Meeting Id");
