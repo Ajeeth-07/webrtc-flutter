@@ -1,28 +1,38 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import '../utils/user_utils.dart';
 
-String meetingApiUrl = 'http://10.0.2.2:4000/api';
+String meetingApiUrl = 'http://192.168.1.12:4000/api';
 var client = http.Client();
 
 Future<http.Response> createMeeting() async {
-  Map<String, String> requestHeaders = {
-    'Content-Type': 'application/json',
-  };
+  try {
+    Map<String, String> requestHeaders = {
+      'Content-Type': 'application/json',
+    };
 
-  var userId = await generateUserId();
+    var userId = await generateUserId();
 
-  var response = await client.post(
-    Uri.parse('$meetingApiUrl/meeting/start'),
-    headers: requestHeaders,
-    body: jsonEncode({'hostId': userId, 'hostName': ''}),
-  );
+    print('Sending request to create meeting...');
+    var response = await client.post(
+      Uri.parse('$meetingApiUrl/meeting/start'),
+      headers: requestHeaders,
+      body: jsonEncode({'hostId': userId, 'hostName': ''}),
+    ).timeout(const Duration(seconds: 20));
 
-  if (response.statusCode == 200) {
-    return response;
-  } else {
-    throw Exception('Failed to create meeting');
+    print('Received response: ${response.statusCode}');
+    if (response.statusCode == 200) {
+      return response;
+    } else {
+      throw Exception('Failed to create meeting: ${response.statusCode}');
+    }
+  } catch (e) {
+    if (e is TimeoutException) {
+      throw Exception('Connection timed out. Please check your server connection.');
+    }
+    throw Exception('Failed to create meeting: $e');
   }
 }
 

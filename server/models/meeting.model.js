@@ -7,7 +7,7 @@ const meeting = mongoose.model(
     {
       hostId: {
         type: String,
-        required: true,
+        required: false,
       },
       hostName: {
         type: String,

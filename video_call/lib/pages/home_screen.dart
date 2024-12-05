@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
       http.Response response = await joinMeeting(meetingId);
       var data = json.decode(response.body);
       final meetingDetails = MeetingDetails.fromJson(data['data']);
-      //go to Join screen
+      goToJoinScreen(meetingDetails);
     } catch (err) {
       FormHelper.showSimpleAlertDialog(
           context, "Meeting App", "Invalid Meeting Id", "Ok", () {
