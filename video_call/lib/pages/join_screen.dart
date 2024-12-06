@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:video_call/api/meeting_api.dart';
 // ignore: depend_on_referenced_packages
 import 'package:snippet_coder_utils/FormHelper.dart';
+import 'package:video_call/pages/meeting_page.dart';
 
 
 class JoinScreen extends StatefulWidget {
@@ -69,6 +70,18 @@ class _JoinScreenState extends State<JoinScreen> {
                   () {
                     if (validateAndSave()) {
                       //TODO: validate meeting
+                      if (widget.meetingDetails != null) {
+                        Navigator.pushReplacement(
+                          context, 
+                          MaterialPageRoute(
+                            builder: (context) => MeetingPage(
+                              meetingId: widget.meetingDetails!.id, 
+                              name: username, 
+                              meetingDetails: widget.meetingDetails!
+                            )
+                          )
+                        );
+                      }
                     }
                   },
                 )),

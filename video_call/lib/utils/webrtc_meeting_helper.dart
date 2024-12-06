@@ -1,6 +1,6 @@
-// ignore: depend_on_referenced_packages
 import 'package:flutter_webrtc/flutter_webrtc.dart' as webrtc;
 import 'package:flutter/material.dart';
+import '../models/custom_peer_connection.dart';
 
 class WebRTCMeetingHelper {
   final String url;
@@ -9,6 +9,7 @@ class WebRTCMeetingHelper {
   final String? name;
   webrtc.RTCPeerConnection? peerConnection;
   webrtc.MediaStream? stream;
+  final Map<String, CustomPeerConnection> connections = {};
   final Map<String, Function(dynamic, BuildContext)> _eventHandlers = {};
 
   WebRTCMeetingHelper({
@@ -20,6 +21,29 @@ class WebRTCMeetingHelper {
 
   void on(String event, BuildContext context, Function(dynamic, BuildContext) handler) {
     _eventHandlers[event] = handler;
+  }
+
+  void toggleVideo() {
+    if (stream != null && stream!.getVideoTracks().isNotEmpty) {
+      final videoTrack = stream!.getVideoTracks()[0];
+      videoTrack.enabled = !videoTrack.enabled;
+      _notifyEvent('video-toggle', null);
+    }
+  }
+
+  void toggleAudio() {
+    if (stream != null && stream!.getAudioTracks().isNotEmpty) {
+      final audioTrack = stream!.getAudioTracks()[0];
+      audioTrack.enabled = !audioTrack.enabled;
+      _notifyEvent('audio-toggle', null);
+    }
+  }
+
+  void _notifyEvent(String event, dynamic data) {
+    final handler = _eventHandlers[event];
+    if (handler != null) {
+      handler(data, _eventHandlers['context'] as BuildContext);
+    }
   }
 
   Future<void> createPeerConnection() async {
@@ -41,5 +65,24 @@ class WebRTCMeetingHelper {
     await peerConnection?.close();
     peerConnection?.dispose();
     _eventHandlers.clear();
+  }
+
+  void endMeeting() {
+    _notifyEvent('meeting-ended', null);
+    destroy();
+  }
+
+  bool isVideoEnabled() {
+    return stream?.getVideoTracks().first.enabled ?? false;
+  }
+
+  bool isAudioEnabled() {
+    return stream?.getAudioTracks().first.enabled ?? false;
+  }
+
+  Future<void> reconnect() async {
+    await destroy();
+    await createPeerConnection();
+    _notifyEvent('connection', null);
   }
 } 

@@ -3,7 +3,10 @@ import 'package:video_call/models/meeting_details.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:video_call/utils/webrtc_meeting_helper.dart';
+import 'package:video_call/widgets/control_panel.dart';
+import 'package:video_call/widgets/remote_connection.dart';
 import '../utils/user_utils.dart';
+import '../pages/home_screen.dart';
 
 class MeetingPage extends StatefulWidget {
   const MeetingPage(
@@ -27,9 +30,18 @@ class _MeetingPageState extends State<MeetingPage> {
   WebRTCMeetingHelper? meetingHelper;
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: Colors.black87,
       body: _buildMeetingRoom(),
+      bottomNavigationBar: ControlPanel(
+        onAudioToggle: onAudioToggle,
+        onVideoToggle: onVideoToggle,
+        videoEnabled: isVideoEnabled(),
+        audioEnabled: isAudioEnabled(),
+        isConnectionFailed: isConnectionFailed,
+        onReconnect: onReconnect,
+        onMeetingEnd: onMeetingEnd,
+      ),
     );
   }
 
@@ -89,12 +101,10 @@ class _MeetingPageState extends State<MeetingPage> {
       });
     });
 
-    setState(() {
-      
-    });
+    setState(() {});
   }
 
-  initRenderers() async{
+  initRenderers() async {
     await _localRenderer.initialize();
   }
 
@@ -115,11 +125,86 @@ class _MeetingPageState extends State<MeetingPage> {
     }
   }
 
-  void onMeetingEnd() {}
+  void onMeetingEnd() {
+    if (meetingHelper != null) {
+      meetingHelper!.endMeeting();
+      meetingHelper = null;
+      goToHomePage();
+    }
+  }
+
+  void onAudioToggle() {
+    if (meetingHelper != null) {
+      setState(() {
+        meetingHelper!.toggleAudio();
+      });
+    }
+  }
+
+  void onVideoToggle() {
+    if (meetingHelper != null) {
+      setState(() {
+        meetingHelper!.toggleVideo();
+      });
+    }
+  }
+
+  void onReconnect() {
+    if (meetingHelper != null) {
+      meetingHelper!.reconnect();
+    }
+  }
+
+  bool isVideoEnabled() {
+    return meetingHelper != null ? meetingHelper!.isVideoEnabled() : false;
+  }
+
+  bool isAudioEnabled() {
+    return meetingHelper != null ? meetingHelper!.isAudioEnabled() : false;
+  }
+
+  void goToHomePage() {
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+  }
+
+  Widget _buildMeetingRoom() {
+    return Stack(
+      children: [
+        meetingHelper != null && meetingHelper!.connections.isNotEmpty
+            ? GridView.count(
+                crossAxisCount: meetingHelper!.connections.length < 3 ? 1 : 2,
+                children: List.generate(meetingHelper!.connections.length, (index) {
+                  var connection = meetingHelper!.connections.values.toList()[index];
+                  return Padding(
+                    padding: const EdgeInsets.all(1.0),
+                    child: RemoteConnection(
+                      renderer: connection.renderer,
+                      connection: connection,
+                      videoEnabled: connection.stream?.getVideoTracks().isNotEmpty ?? false 
+                          ? connection.stream!.getVideoTracks().first.enabled 
+                          : false,
+                    ),
+                  );
+                }),
+              )
+            : const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(10.0),
+                  child: Text(
+                    "Waiting for other participants to join",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontSize: 24.0),
+                  ),
+                ),
+              ),
+        Positioned( bottom : 10, right: 0, child: SizedBox(
+          width: 150,
+            height: 200,
+            child: RTCVideoView(_localRenderer),
+          ),
+        )
+      ],
+    );
+  }
 }
-
-class _buildMeetingRoom {
-  const _buildMeetingRoom();
-}
-
-
